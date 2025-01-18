@@ -9,48 +9,57 @@
 #define COORDINATES_SERVICE_UUID "12345678-1234-1234-1234-1234567890ab"
 #define COORDINATES_CHAR_UUID "abcd1234-5678-9abc-def0-1234567890ab"
 
-#define ZOOM_SERVICE_UUID "87654321-4321-4321-4321-9876543210ab"
-#define ZOOM_CHAR_UUID "fedcba98-7654-3210-0987-654321fedcba"
+#define ZOOM_SERVICE_UUID "87654321-4321-4321-4321-9876543210ac" 
+#define ZOOM_CHAR_UUID "fedcba98-7654-3210-0987-654321fedcbb"
 
-#define MODE_SERVICE_UUID "56781234-1234-1234-1234-1234567890ab"
-#define MODE_CHAR_UUID "dcba1234-5678-9abc-def0-1234567890ab"
+#define MODE_SERVICE_UUID "56781234-1234-1234-1234-1234567890ac" 
+#define MODE_CHAR_UUID "dcba1234-5678-9abc-def0-1234567890ac"    
+
+#define REDO_UNDO_SERVICE_UUID "98765432-4321-4321-4321-1234567890ab" 
+#define REDO_UNDO_CHAR_UUID "efdcba98-7654-3210-0987-654321fedcbb"    
+
 
 // Potentiometer pin
-  #define POTENTIOMETER_PIN 15
-  //Filter size for potentiometer data
-  #define FILTER_SIZE 10 
+#define POTENTIOMETER_PIN 15
 
-  //Rotary Encoder pins
-  #define ROTARY_PIN_CLK 12
-  #define ROTARY_PIN_DT 13
-  #define ROTARY_PIN_SW 14
+// Filter size for potentiometer data
+#define FILTER_SIZE 10
 
+// Rotary Encoder pins
+#define ROTARY_PIN_CLK 12
+#define ROTARY_PIN_DT 13
+#define ROTARY_PIN_SW 14
 
-//Resistive Touch pins
+// REDO UNDO
+#define REDO_PIN 22
+#define UNDO_PIN 23
+
+// Resistive Touch pins
 #define X1_PIN 32 // Positive X
 #define X2_PIN 33 // Negative X
 #define Y1_PIN 25 // Positive Y
 #define Y2_PIN 26 // Negative Y
 
-int xThreshold = 450;  // Threshold for X coordinate
-int yThreshold = 450;  // Threshold for Y coordinate
-int filterSize = 10;   // Number of samples for the moving average filter
+int xThreshold = 450; // Threshold for X coordinate
+int yThreshold = 450; // Threshold for Y coordinate
+int filterSize = 3;  // moving average filter
 
-int xReadings[10]; // Array to store X readings
-int yReadings[10]; // Array to store Y readings
-int xIndex = 0;    // Current index for X readings
-int yIndex = 0;    // Current index for Y readings
+int xReadings[10]; 
+int yReadings[10]; 
+int xIndex = 0;
+int yIndex = 0;
 
 // Rotary Encoder variables
-volatile int mode = 0;           // Mode value (0 to 10)
-volatile int lastStateCLK;       // Last state of the CLK pin
-volatile int stepCounter = 0;    // Tracks steps for threshold
-const int stepThreshold = 3;     // Number of steps required to change the mode
-const int minMode = 0;           // Minimum mode value
-const int maxMode = 10;          // Maximum mode value
+volatile int mode = 0;
+volatile int lastStateCLK;
+volatile int stepCounter = 0;
+const int stepThreshold = 3;
+const int minMode = 0;  // Minimum mode value
+const int maxMode = 10; // Maximum mode value
 
-//filter for potentiometer data
-int filterPotentiometerData(int newValue) {
+// filter for potentiometer data
+int filterPotentiometerData(int newValue)
+{
   static int filterBuffer[FILTER_SIZE] = {0};
   static int index = 0;
   static int sum = 0;
@@ -65,10 +74,11 @@ int filterPotentiometerData(int newValue) {
   return sum / FILTER_SIZE;
 }
 
-//Read the X coordinate
-int readX() {
-  pinMode(Y1_PIN, INPUT_PULLDOWN);  // Enable internal pull-down resistor
-  pinMode(Y2_PIN, INPUT_PULLDOWN);  // Enable internal pull-down resistor
+// Read the X coordinate
+int readX()
+{
+  pinMode(Y1_PIN, INPUT_PULLDOWN); // Enable internal pull-down resistor
+  pinMode(Y2_PIN, INPUT_PULLDOWN); // Enable internal pull-down resistor
   pinMode(X1_PIN, OUTPUT);
   pinMode(X2_PIN, OUTPUT);
 
@@ -76,19 +86,20 @@ int readX() {
   digitalWrite(X2_PIN, LOW);
 
   int value = analogRead(Y2_PIN);
-  
-  // If the value is below the threshold, consider it as no touch
-  if (value < xThreshold) {
-    return -1;  // No touch
+
+  if (value < xThreshold)
+  {
+    return -1; // No touch
   }
 
   return value;
 }
 
 // Function to read Y coordinate
-int readY() {
-  pinMode(X1_PIN, INPUT_PULLDOWN);  // Enable internal pull-down resistor
-  pinMode(X2_PIN, INPUT_PULLDOWN);  // Enable internal pull-down resistor
+int readY()
+{
+  pinMode(X1_PIN, INPUT_PULLDOWN);
+  pinMode(X2_PIN, INPUT_PULLDOWN);
   pinMode(Y1_PIN, OUTPUT);
   pinMode(Y2_PIN, OUTPUT);
 
@@ -96,63 +107,72 @@ int readY() {
   digitalWrite(Y2_PIN, LOW);
 
   int value = analogRead(X2_PIN);
-  
-  // If the value is below the threshold, consider it as no touch
-  if (value < yThreshold) {
-    return -1;  // No touch
+
+  if (value < yThreshold)
+  {
+    return -1; // No touch
   }
 
   return value;
 }
 
-int getAverageX(int newX) {
+int getAverageX(int newX)
+{
   xReadings[xIndex] = newX;
   xIndex = (xIndex + 1) % filterSize;
 
   int sumX = 0;
-  for (int i = 0; i < filterSize; i++) {
+  for (int i = 0; i < filterSize; i++)
+  {
     sumX += xReadings[i];
   }
   return sumX / filterSize;
 }
 
-// Function to update and calculate the moving average for Y readings
-int getAverageY(int newY) {
+int getAverageY(int newY)
+{
   yReadings[yIndex] = newY;
   yIndex = (yIndex + 1) % filterSize;
 
   int sumY = 0;
-  for (int i = 0; i < filterSize; i++) {
+  for (int i = 0; i < filterSize; i++)
+  {
     sumY += yReadings[i];
   }
   return sumY / filterSize;
 }
 
-// Rotary Encoder interrupt service routine
-void IRAM_ATTR handleRotation() {
+void IRAM_ATTR handleRotation()
+{
   int currentStateCLK = digitalRead(ROTARY_PIN_CLK);
-  if (currentStateCLK != lastStateCLK && currentStateCLK == HIGH) {
+  if (currentStateCLK != lastStateCLK && currentStateCLK == HIGH)
+  {
     int stateDT = digitalRead(ROTARY_PIN_DT);
-    if (stateDT != currentStateCLK) {
-      stepCounter++; // Increment step counter for clockwise
-    } else {
-      stepCounter--; // Decrement step counter for counterclockwise
+    if (stateDT != currentStateCLK)
+    {
+      stepCounter++; // Increment step counter 
+    }
+    else
+    {
+      stepCounter--; // Decrement step counter 
     }
 
-    // Handle clockwise rotation
-    if (stepCounter >= stepThreshold) {
-      if (mode < maxMode) {
+    if (stepCounter >= stepThreshold)
+    {
+      if (mode < maxMode)
+      {
         mode++;
-        Serial.printf("Clockwise - Mode: %d\n", mode);
+        // Serial.printf("Clockwise - Mode: %d\n", mode);
       }
-      stepCounter = 0; // Reset step counter
+      stepCounter = 0; // Reset 
     }
 
-    // Handle counterclockwise rotation
-    if (stepCounter <= -stepThreshold) {
-      if (mode > minMode) {
+    if (stepCounter <= -stepThreshold)
+    {
+      if (mode > minMode)
+      {
         mode--;
-        Serial.printf("Counterclockwise - Mode: %d\n", mode);
+        // Serial.printf("Counterclockwise - Mode: %d\n", mode);
       }
       stepCounter = 0; // Reset step counter
     }
@@ -163,32 +183,41 @@ void IRAM_ATTR handleRotation() {
 BLECharacteristic *coordinatesCharacteristic;
 BLECharacteristic *zoomCharacteristic;
 BLECharacteristic *modeCharacteristic;
+BLECharacteristic *redoUndoCharacteristic;
+
 bool deviceConnected = false;
 
-class MyServerCallbacks : public BLEServerCallbacks {
-  void onConnect(BLEServer *pServer) {
+class MyServerCallbacks : public BLEServerCallbacks
+{
+  void onConnect(BLEServer *pServer)
+  {
     deviceConnected = true;
     Serial.println("Device connected");
   }
 
-  void onDisconnect(BLEServer *pServer) {
+  void onDisconnect(BLEServer *pServer)
+  {
     deviceConnected = false;
     Serial.println("Device disconnected");
     pServer->startAdvertising();
   }
 };
 
-void zoomTask(void *parameter) {
+void zoomTask(void *parameter)
+{
   int previousZoomValue = 0;
 
-  while (true) {
-    if (deviceConnected) {
+  while (true)
+  {
+    if (deviceConnected)
+    {
       int potValue = analogRead(POTENTIOMETER_PIN);
       // Serial.print("> Potentiometer value:");
-      // Serial.println(potValue); 
+      // Serial.println(potValue);
       int filteredPotValue = filterPotentiometerData(potValue);
       int zoomValue = map(filteredPotValue, 0, 4095, 0, 200);
-      if (abs(zoomValue - previousZoomValue) > 2) {
+      if (abs(zoomValue - previousZoomValue) > 2)
+      {
         String message = String("{\"zoom\": ") + String(zoomValue) + "}";
 
         zoomCharacteristic->setValue(message.c_str());
@@ -198,7 +227,9 @@ void zoomTask(void *parameter) {
 
         Serial.println(message);
       }
-    } else {
+    }
+    else
+    {
       Serial.println("Device not connected - Zoom task idle"); // Debugging output
     }
 
@@ -206,19 +237,24 @@ void zoomTask(void *parameter) {
   }
 }
 
-
-void modeTask(void *parameter) {
- int lastMode = -1; // Tracks the last mode value
-  while (true) {
-    if (deviceConnected) {
-      if (mode != lastMode) {
+void modeTask(void *parameter)
+{
+  int lastMode = -1; // Tracks the last mode value
+  while (true)
+  {
+    if (deviceConnected)
+    {
+      if (mode != lastMode)
+      {
         String message = String("{\"mode\": ") + String(mode) + "}";
         modeCharacteristic->setValue(message.c_str());
         modeCharacteristic->notify();
         lastMode = mode;
         Serial.println(message);
       }
-    } else {
+    }
+    else
+    {
       Serial.println("Device not connected - Mode task idle"); // Debugging output
     }
 
@@ -226,42 +262,45 @@ void modeTask(void *parameter) {
   }
 }
 
-void touchPanelTask(void *parameter) {
-  while (true) {
-    if (deviceConnected) {
+void touchPanelTask(void *parameter)
+{
+  while (true)
+  {
+    if (deviceConnected)
+    {
       // Read raw X and Y values
       int rawX = readX();
       int rawY = readY();
 
-      // Only proceed if both X and Y values are valid (touched)
-      if (rawX != -1 && rawY != -1) {
-        // Apply moving average filter for X and Y
-        int smoothedX = getAverageX(rawX);  // Apply moving average filter for X
-        int smoothedY = getAverageY(rawY);  // Apply moving average filter for Y
+      // proceed if both X and Y values are valid (touched)
+      if (rawX != -1 && rawY != -1)
+      {
+        // moving average filter
+        int smoothedX = getAverageX(rawX);
+        int smoothedY = getAverageY(rawY);
 
-        // Map the smoothed values to pixel coordinates
-        int pixelX = map(smoothedX, 450, 3900, 0, 700); // Map X value to screen width
-        int pixelY = map(smoothedY, 450, 3300, 0, 400); // Map Y value to screen height
+        // Map the values to pixel coordinates
+        int pixelX = map(smoothedX, 450, 3900, 0, 700);
+        int pixelY = map(smoothedY, 450, 3300, 0, 400);
 
         // Create the JSON message for X, Y, and Pixel values
         String message = String("{\"X\":") + pixelX + String(",\"Y\":") + pixelY + String("}");
 
-
-        // Set the value and notify the characteristic
         coordinatesCharacteristic->setValue(message.c_str());
         coordinatesCharacteristic->notify();
 
-        // Print the message to the Serial Monitor for debugging
         Serial.println(message);
-      } else {
-        // If not touched, print "Not touched"
-        String message = String("{\"X\":-1,\"Y\":-1}");
-        coordinatesCharacteristic->setValue(message.c_str());
-        coordinatesCharacteristic->notify();
-
       }
-    } else {
-      // If device is not connected, print idle message
+      else
+      {
+        // // If not touched, print "Not touched"
+        // String message = String("{\"X\":-1,\"Y\":-1}");
+        // coordinatesCharacteristic->setValue(message.c_str());
+        // coordinatesCharacteristic->notify();
+      }
+    }
+    else
+    {
       Serial.println("Device not connected - Touch panel task idle");
     }
 
@@ -270,13 +309,80 @@ void touchPanelTask(void *parameter) {
   }
 }
 
+void redoUndoTask(void *parameter)
+{
+  const unsigned long debounceDelay = 250; 
+  unsigned long lastRedoPressTime = 0;
+  unsigned long lastUndoPressTime = 0;
 
-void setup() {
+  pinMode(REDO_PIN, INPUT_PULLUP);
+  pinMode(UNDO_PIN, INPUT_PULLUP);
+
+  while (true)
+  {
+    if (deviceConnected)
+    {
+      int redoButton = digitalRead(REDO_PIN);
+      int undoButton = digitalRead(UNDO_PIN);
+
+      unsigned long currentTime = millis();
+
+      // Check if the redo button is pressed and debounce time has passed
+      if (redoButton == LOW && (currentTime - lastRedoPressTime > debounceDelay))
+      {
+        lastRedoPressTime = currentTime;
+        String message = String("{\"action\": 0}");  // Sending 0 for redo action
+        redoUndoCharacteristic->setValue(message.c_str());
+        redoUndoCharacteristic->notify();
+        Serial.println("Redo button pressed");
+      }
+
+      // Check if the undo button is pressed and debounce time has passed
+      if (undoButton == LOW && (currentTime - lastUndoPressTime > debounceDelay))
+      {
+        lastUndoPressTime = currentTime;
+        String message = String("{\"action\": 1}");  // Sending 1 for undo action
+        redoUndoCharacteristic->setValue(message.c_str());
+        redoUndoCharacteristic->notify();
+        Serial.println("Undo button pressed");
+      }
+    }
+    else
+    {
+      Serial.println("Device not connected - Redo Undo task idle");
+    }
+
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+  }
+}
+
+void blinkTask(void *parameter)
+{
+  int ledPin = 2;
+  pinMode(ledPin, OUTPUT);
+  while (true)
+  {
+    if(deviceConnected) {
+      digitalWrite(ledPin, HIGH);
+      vTaskDelay(3000 / portTICK_PERIOD_MS);
+      digitalWrite(ledPin, LOW);
+      vTaskDelay(3000 / portTICK_PERIOD_MS);
+    } else {
+      digitalWrite(ledPin, HIGH);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+  }
+}
+
+void setup()
+{
   pinMode(POTENTIOMETER_PIN, INPUT);
-    
+
   pinMode(ROTARY_PIN_CLK, INPUT);
   pinMode(ROTARY_PIN_DT, INPUT);
-  
+
+
   Serial.begin(115200);
 
   // Attach interrupt for rotary encoder
@@ -293,9 +399,8 @@ void setup() {
   // Coordinate Service
   BLEService *coordinateService = pServer->createService(COORDINATES_SERVICE_UUID);
   coordinatesCharacteristic = coordinateService->createCharacteristic(
-    COORDINATES_CHAR_UUID,
-    BLECharacteristic::PROPERTY_NOTIFY
-  );
+      COORDINATES_CHAR_UUID,
+      BLECharacteristic::PROPERTY_NOTIFY);
   coordinatesCharacteristic->addDescriptor(new BLE2902());
   coordinateService->start();
   Serial.println("Coordinate Service started");
@@ -303,9 +408,8 @@ void setup() {
   // Zoom Service
   BLEService *zoomService = pServer->createService(ZOOM_SERVICE_UUID);
   zoomCharacteristic = zoomService->createCharacteristic(
-    ZOOM_CHAR_UUID,
-    BLECharacteristic::PROPERTY_NOTIFY
-  );
+      ZOOM_CHAR_UUID,
+      BLECharacteristic::PROPERTY_NOTIFY);
   zoomCharacteristic->addDescriptor(new BLE2902());
   zoomService->start();
   Serial.println("Zoom Service started");
@@ -313,18 +417,27 @@ void setup() {
   // Mode Service
   BLEService *modeService = pServer->createService(MODE_SERVICE_UUID);
   modeCharacteristic = modeService->createCharacteristic(
-    MODE_CHAR_UUID,
-    BLECharacteristic::PROPERTY_NOTIFY
-  );
+      MODE_CHAR_UUID,
+      BLECharacteristic::PROPERTY_NOTIFY);
   modeCharacteristic->addDescriptor(new BLE2902());
   modeService->start();
   Serial.println("Mode Service started");
+
+  // Redo Undo Service
+  BLEService *redoUndoService = pServer->createService(REDO_UNDO_SERVICE_UUID);
+  redoUndoCharacteristic = redoUndoService->createCharacteristic(
+      REDO_UNDO_CHAR_UUID,
+      BLECharacteristic::PROPERTY_NOTIFY);
+  redoUndoCharacteristic->addDescriptor(new BLE2902());
+  redoUndoService->start();
+  Serial.println("Redo Undo Service started");
 
   // Start advertising
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(COORDINATES_SERVICE_UUID);
   pAdvertising->addServiceUUID(ZOOM_SERVICE_UUID);
   pAdvertising->addServiceUUID(MODE_SERVICE_UUID);
+  pAdvertising->addServiceUUID(REDO_UNDO_SERVICE_UUID);
   BLEDevice::startAdvertising();
 
   Serial.println("Waiting for client to connect...");
@@ -333,12 +446,17 @@ void setup() {
   // xTaskCreate(zoomTask, "zoomTask", 15000, NULL, 1, NULL);
   // xTaskCreate(modeTask, "modeTask", 15000, NULL, 1, NULL);
   // xTaskCreate(touchPanelTask, "touchPanelTask", 15000, NULL, 1, NULL);
+  // xTaskCreate(blinkTask, "blinkTask", 15000, NULL, 1, NULL);
 
+  xTaskCreatePinnedToCore(zoomTask, "zoomTask", 15000, NULL, 1, NULL, 0);             // Pin to core 0
+  xTaskCreatePinnedToCore(modeTask, "modeTask", 15000, NULL, 1, NULL, 0);             // Pin to core 0
+  xTaskCreatePinnedToCore(redoUndoTask, "redoUndoTask", 15000, NULL, 2, NULL, 0);     // Pin to core 0
+  xTaskCreatePinnedToCore(touchPanelTask, "touchPanelTask", 15000, NULL, 1, NULL, 1); // Pin to core 1, higher priority
 
-  xTaskCreatePinnedToCore(zoomTask, "zoomTask", 15000, NULL, 1, NULL, 0);  // Pin to core 0
-  xTaskCreatePinnedToCore(modeTask, "modeTask", 15000, NULL, 1, NULL, 0);  // Pin to core 0
-  xTaskCreatePinnedToCore(touchPanelTask, "touchPanelTask", 15000, NULL, 1, NULL, 1);  // Pin to core 1
+  xTaskCreatePinnedToCore(blinkTask, "blinkTask", 15000, NULL, 2, NULL, 1); // Pin to core 0
+
 }
 
-void loop() {
+void loop()
+{
 }
