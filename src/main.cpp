@@ -50,8 +50,8 @@ int xThreshold = 700; // Threshold for X coordinate
 int yThreshold = 700; // Threshold for Y coordinate
 int filterSize = 3;   // moving average filter
 
-int xReadings[10];
-int yReadings[10];
+int xReadings[3];
+int yReadings[3];
 int xIndex = 0;
 int yIndex = 0;
 
@@ -304,6 +304,8 @@ void modeTask(void *parameter)
 
 void touchPanelTask(void *parameter)
 {
+  bool wait = false;
+  int waitDelay = 200;
   while (true)
   {
     if (deviceConnected)
@@ -311,19 +313,33 @@ void touchPanelTask(void *parameter)
       int rawX = readX();
       int rawY = readY();
 
+      if (rawX == -1 && rawY == -1)
+      {
+        wait = true;
+      }else {
+        wait = false;
+      }
+
       // Serial.print("X: ");
       // Serial.print(rawX);
       // Serial.print(" Y: ");
       // Serial.println(rawY);
       if (rawX != -1 && rawY != -1)
       {
+        if(wait){
+          vTaskDelay(waitDelay / portTICK_PERIOD_MS);
+          continue;
+        }
         // moving average filter
         int smoothedX = getAverageX(rawX);
         int smoothedY = getAverageY(rawY);
 
+        // int smoothedX = rawX;
+        // int smoothedY = rawY;
+
         // Map the values to pixel coordinates
-        int pixelX = map(smoothedX, xThreshold, 3900, 0, 700);
-        int pixelY = map(smoothedY, yThreshold, 3300, 0, 400);
+        int pixelX = map(smoothedX, xThreshold, 3900, 0, 570); //380
+        int pixelY = map(smoothedY, yThreshold, 3300, 0, 320); //220
 
         // Create the JSON message for X, Y, and Pixel values
         String message = String("{\"X\":") + pixelX + String(",\"Y\":") + pixelY + String("}");
